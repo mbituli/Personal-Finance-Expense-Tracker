@@ -1,3 +1,9 @@
+# Kevin P. Nguyen
+# Anlee Nguyen
+# Madeleine Bituli
+
+# Python Finance Expense Tracker
+
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 from datetime import datetime
@@ -20,7 +26,7 @@ INCOME_COLORS = [
 class TrackerCSV(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Income vs Expense Pie Chart Tracker")
+        self.title("Python Finance Expense Tracker")
         self.configure(bg="#f0f0f0")
         self.csv_file = "data.csv"
         self.entries = []
@@ -106,7 +112,7 @@ class TrackerCSV(tk.Tk):
 
     # Deletes selected entry from the table
     def delete_entry(self):
-       select_item = self.tree.selection()
+        select_item = self.tree.selection()
 
         if not select_item:
             messagebox.showerror("Invalid", "Please select a transaction to delete.")
@@ -155,6 +161,10 @@ class TrackerCSV(tk.Tk):
         path = filedialog.askopenfilename(filetypes = [("CSV Files", "*.csv")])
         if path:
             df = pd.read_csv(path)
+            df["Date"] = pd.to_datetime(df["Date"], format = "%Y-%m-%d", errors = 'coerce')
+            df = df.dropna(subset = ["Date"])
+            df = df.sort_values("Date")
+            df["Date"] = df["Date"].dt.strftime("%Y-%m-%d")
             self.entries = df.values.tolist()
             self.update_tree()
             self.save_csv()
@@ -165,6 +175,10 @@ class TrackerCSV(tk.Tk):
         path = filedialog.asksaveasfilename(filetypes = [("CSV Files", "*.csv")])
         if path:
             df = pd.DataFrame(self.entries, columns = ["Date", "Category", "Amount", "Transaction Type"])
+            df["Date"] = pd.to_datetime(df["Date"], format = "%Y-%m-%d", errors = 'coerce')
+            df = df.dropna(subset = ["Date"])
+            df = df.sort_values("Date")
+            df["Date"] = df["Date"].dt.strftime("%Y-%m-%d")
             df.to_csv(path, index = False)
 
     # Generates and displays a pie chart with income vs expense
@@ -233,58 +247,6 @@ class Transaction:
     def __init__(self, entries):
         self.entries = entries
 
-    # Calculate total expense and income
-    def calculate_totals(self):
-        total_expense = 0
-        total_income = 0
-
-        for entry in self.entries:
-            amount = float(entry[2][1:])
-            transaction_type = entry[3]
-            
-            # total expense
-            if transaction_type == 'Expense':
-                total_expense += amount
-
-            # total income
-            if transaction_type == 'Income':
-                total_income += amount
-
-        # OPTIONAL  
-        # total_balance = total_income - total_expense
-
-        return total_expense, total_income, total_balance
-
-    def calculate_category_totals(self):
-        categories = dict()
-        total_expense, total_income = self.calculate_totals()
-
-        for entry in self.entries:
-            cat = entry[1]
-            amount = float(entry[2][1:])
-            transaction_type = entry[3]
-
-            if cat not in categories:
-                categories[cat] = {
-                    "Income": 0,
-                    "Expense": 0
-                }
-            if transaction_type == 'Expense':
-                categories[cat]["Expense"] += amount
-            elif transaction_type == 'Income':
-                categories[cat]["Income"] += amount
-
-        # for cat in categories:
-        #     if total_expense > 0:
-        #         expense_percent = (categories[cat]["Expense"]/ total_expense) * 100
-        #         categories[cat]["Expense %"] = expense_percent
-        #     if total_income > 0:
-        #         income_percent = (categories[cat]["Income"] / total_income) * 100
-        #         categories[cat]["Income %"] = income_percent
-        
-        return categories
-
-    # OPTIONAL
     def calculate_weekly_summary(self):
         total_by_week = dict()
 
@@ -296,7 +258,7 @@ class Transaction:
 
             if week_key not in total_by_week:
                 total_by_week[week_key] = {
-                    "income": 0,
+                    "Income": 0,
                     "Expense": 0
                 }
             
@@ -310,7 +272,6 @@ class Transaction:
         
         return total_by_week
 
-    # OPTIONAL
     def calculate_monthly_summary(self):
         total_by_month = dict()
 
