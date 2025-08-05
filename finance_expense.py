@@ -5,6 +5,18 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 
+# Global colors
+EXPENSE_COLORS = [
+    "#FFB3BA", "#FFD2B3", "#FFF4B3", "#B3E5FF", "#D4B3FF",
+    "#E3B3FF", "#F7B3FF", "#E6FFFF", "#FFF9D6", "#FFE9B3",
+    "#FADADD", "#FBE8EB", "#FFEDC2", "#FFF0F5", "#FFCCE5",
+    "#FAF0DD", "#F3E5AB", "#ADD8E6", "#D6C8FF", "#F5CCFF"
+]
+INCOME_COLORS = [
+    "#CFFFD0", "#B8F9B8", "#A8F0A8", "#98E998", "#88E788",
+    "#78DD78", "#68D168", "#58C658", "#48BA48", "#38AD38"
+]
+
 class TrackerCSV(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -157,24 +169,65 @@ class TrackerCSV(tk.Tk):
 
     # Generates and displays a pie chart with income vs expense
     def show_pie_chart(self):
-        """
-        Read and process data:
-            - Remove dollar signs and commas
-            - Convert to float
-            - Apply date filtering (monthly or weekly)
+        # Read and process data
+        cleaned = []
+        for entry in self.entries:
+            date_str, cat, amt_str, typ = entry
 
-        Group data by Type + Category
-        Generate custom labels:
-            - Prefix income categories with 'Income:'
-            - Show only category name for expenses
+            # Convert to float
+            amt = float(amt_str.replace("$", "").replace(",", ""))
 
-        Sum income and expense separately
-        Show a pie chart with:
-            - Percentage labels
-            - Custom colors (green for income, pastel for expense)
-            - Title showing Income and Expenses totals
-        """
-        pass  # algorithm placeholder
+            # Clean up date info
+            date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+
+            cleaned.append((date_obj, cat, amt, typ))
+
+        # Determine averaging factor based on filter
+        filter_choice = self.filter_option.get()
+        if filter_choice == "Monthly":
+            n = len(Transaction(self.entries).calculate_monthly_summary()) or 1
+        elif filter_choice == "Weekly":
+            n = len(Transaction(self.entries).calculate_weekly_summary()) or 1
+        else:
+            n = 1
+
+        # Group data by Type + Category
+        expense_category = {}
+        income_category  = {}
+
+        for date_obj, category, amount, typ in cleaned:
+            if typ == "Expense":
+                expense_category[category] = expense_category.get(category, 0) + amount
+            else:
+                income_category[category]  = income_category.get(category, 0)  + amount
+
+        for cat in expense_category:
+            expense_category[cat] /= n
+        for cat in income_category:
+            income_category[cat]  /= n
+
+        labels = [f"Income:{cat}" for cat in income_category] \
+               + [cat for cat in expense_category]
+        sizes  = [income_category[cat] for cat in income_category] \
+               + [expense_category[cat] for cat in expense_category]
+
+        # Use predetermined colors for income and expenses
+        num_inc  = len(income_category)
+        num_exp  = len(expense_category)
+        colors   = INCOME_COLORS[:num_inc] + EXPENSE_COLORS[:num_exp]
+
+        total_inc = sum(income_category.values())
+        total_exp = sum(expense_category.values())
+
+        plt.close()
+        plt.pie(sizes, labels=labels, autopct="%1.1f%%", colors=colors)
+        plt.axis("equal")
+        plt.title(
+            f"Income: ${total_inc:.2f}\nExpenses: ${total_exp:.2f}",
+            pad=20
+        )   
+        plt.show()
+        self.chart_open = True
 
 class Transaction:
     def __init__(self, entries):
