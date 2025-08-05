@@ -3,5 +3,5 @@ A personal finance expense tracker created with Python that helps users monitor 
 
 ## Installation/Usage
 1. Download finance_expense.py from the repository https://github.com/mbituli/Personal-Finance-Expense-Tracker
-2. Inside your terminal copy + paste + enter to install Pandas and Matplotlib: 'pip install pandas' and 'pip install matplotlib'
-3. To run program; inside the terminal: 'python finance_expense.py'
+2. Inside the terminal `copy + paste + enter` to install Pandas and Matplotlib: `pip install pandas` and `pip install matplotlib`
+3. To run program; inside the terminal `copy + paste + enter`: `python finance_expense.py`
