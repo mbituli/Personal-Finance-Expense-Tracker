@@ -8,7 +8,7 @@ import os
 class TrackerCSV(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Income vs Expense Pie Chart Tracker")
+        self.title("Python Finance Expense Tracker")
         self.configure(bg="#f0f0f0")
         self.csv_file = "data.csv"
         self.entries = []
@@ -63,97 +63,74 @@ class TrackerCSV(tk.Tk):
 
     # Adds a new income or expense entry to the table
     def add_entry(self):
-        date = self.entry_date.get().strip()
-        category = self.entry_cat.get().strip()
-        amount = self.entry_amt.get().strip()
-        transaction_type = self.combo_type.get()
+        """
+        Validate the input fields:
+        - Ensure all fields are filled
+        - Date is in YYYY-MM-DD format
+        - Amount is a valid number
 
-        if not date or not category or not amount or not transaction_type:
-            messagebox.showerror("Missing", "Please fill all fields.")
-            return
-        
-        try:
-            datetime.strptime(date, "%Y-%m-%d")
-        except Exception:
-            messagebox.showerror("Invalid", "Date must be in YYYY-MM-DD format.")
-            return
-        
-        try:
-            amount = float(amount)
-        except Exception:
-            messagebox.showerror("Invalid", "Amount must be a number.")
-            return
-
-        new_entry = [date, category, f"${amount:.2f}", transaction_type]
-        self.entries.append(new_entry)
-        self.update_tree()
-        self.save_csv()
-        self.entry_date.delete(0, tk.END)
-        self.entry_cat.delete(0, tk.END)
-        self.entry_amt.delete(0, tk.END)
+        Append entry to list of entries
+        Clear input fields
+        Update display
+        Save to CSV
+        """
+        pass  # algorithm placeholder
 
     # Deletes selected entry from the table
     def delete_entry(self):
-       select_item = self.tree.selection()
-
-        if not select_item:
-            messagebox.showerror("Invalid", "Please select a transaction to delete.")
-            return
-        
-        for item in select_item:
-            value = self.tree.item(item)['values']
-            for i, entry in enumerate(self.entries):
-                if list(entry) == list(value):
-                    del self.entries[i]
-                    break
-            self.tree.delete(item)
-        self.update_tree()
-        self.save_csv()
+        """
+        Get selected row(s) in the tree
+        Remove those entries from internal list
+        Update the table
+        Save the updated list to CSV
+        """
+        pass  # algorithm placeholder
 
     # Updates the treeview widget with current entry list
     def update_tree(self):
-        for row in self.tree.get_children():
-            self.tree.delete(row)
-        
-        for item in self.entries:
-            self.tree.insert('', tk.END, values = item)
+        """
+        Clear existing rows in the treeview
+        Loop through all entries and insert them into the tree
+        """
+        pass  # algorithm placeholder
 
     # Saves current data to CSV file
     def save_csv(self):
-        df = pd.DataFrame(self.entries, columns = ["Date", "Category", "Amount", "Transaction Type"])
-        df.to_csv(self.csv_file, index = False)
+        """
+        Convert entries to DataFrame
+        Write DataFrame to CSV file
+        """
+        pass  # algorithm placeholder
 
-    # Loads data from the existing CSV file at startup and sort the data by Date
+    # Loads data from the existing CSV file at startup
     def load_csv(self):
-        if not os.path.exists(self.csv_file):
-            messagebox.showerror("Error", "CSV file does not exist.")
-            return
-
-        df = pd.read_csv(self.csv_file)
-        df["Date"] = pd.to_datetime(df["Date"], format = "%Y-%m-%d", errors = 'coerce')
-        df = df.dropna(subset = ["Date"])
-        df = df.sort_values("Date")
-        df["Date"] = df["Date"].dt.strftime("%Y-%m-%d")
-        self.entries = df.values.tolist()
-        self.update_tree()
-
+        """
+        If CSV file exists:
+            Read it into DataFrame
+            Convert to list of entries
+            Update the treeview
+        """
+        pass  # algorithm placeholder
 
     # Imports a new CSV file and replaces all current entries
     def import_csv(self):
-        path = filedialog.askopenfilename(filetypes = [("CSV Files", "*.csv")])
-        if path:
-            df = pd.read_csv(path)
-            self.entries = df.values.tolist()
-            self.update_tree()
-            self.save_csv()
+        """
+        Open file dialog to select a CSV file
+        Read data into DataFrame
+        Replace current entry list with new data
+        Update treeview
+        Save to main CSV file
+        """
+        pass  # algorithm placeholder
 
     # Exports current data to a user-specified CSV file
     def export_csv(self):
-
-        path = filedialog.asksaveasfilename(filetypes = [("CSV Files", "*.csv")])
-        if path:
-            df = pd.DataFrame(self.entries, columns = ["Date", "Category", "Amount", "Transaction Type"])
-            df.to_csv(path, index = False)
+        """
+        Open file dialog to pick where to save
+        Convert entry list to DataFrame
+        Save it to selected location
+        """
+        pass  # algorithm placeholder
 
     # Generates and displays a pie chart with income vs expense
     def show_pie_chart(self):
@@ -175,114 +152,6 @@ class TrackerCSV(tk.Tk):
             - Title showing Income and Expenses totals
         """
         pass  # algorithm placeholder
-
-class Transaction:
-    def __init__(self, entries):
-        self.entries = entries
-
-    # Calculate total expense and income
-    def calculate_totals(self):
-        total_expense = 0
-        total_income = 0
-
-        for entry in self.entries:
-            amount = float(entry[2][1:])
-            transaction_type = entry[3]
-            
-            # total expense
-            if transaction_type == 'Expense':
-                total_expense += amount
-
-            # total income
-            if transaction_type == 'Income':
-                total_income += amount
-
-        # OPTIONAL  
-        # total_balance = total_income - total_expense
-
-        return total_expense, total_income, total_balance
-
-    def calculate_category_totals(self):
-        categories = dict()
-        total_expense, total_income = self.calculate_totals()
-
-        for entry in self.entries:
-            cat = entry[1]
-            amount = float(entry[2][1:])
-            transaction_type = entry[3]
-
-            if cat not in categories:
-                categories[cat] = {
-                    "Income": 0,
-                    "Expense": 0
-                }
-            if transaction_type == 'Expense':
-                categories[cat]["Expense"] += amount
-            elif transaction_type == 'Income':
-                categories[cat]["Income"] += amount
-
-        # for cat in categories:
-        #     if total_expense > 0:
-        #         expense_percent = (categories[cat]["Expense"]/ total_expense) * 100
-        #         categories[cat]["Expense %"] = expense_percent
-        #     if total_income > 0:
-        #         income_percent = (categories[cat]["Income"] / total_income) * 100
-        #         categories[cat]["Income %"] = income_percent
-        
-        return categories
-
-    # OPTIONAL
-    def calculate_weekly_summary(self):
-        total_by_week = dict()
-
-        for entry in self.entries:
-            date = entry[0]
-            date_obj = datetime.strptime(date, "%Y-%m-%d")
-            year, week, _ = date_obj.isocalendar()
-            week_key = f"{year}-Week {week:02d}"
-
-            if week_key not in total_by_week:
-                total_by_week[week_key] = {
-                    "income": 0,
-                    "Expense": 0
-                }
-            
-            amount = float(entry[2][1:])
-            transaction_type = entry[3]
-
-            if transaction_type == 'Expense':
-                total_by_week[week_key]["Expense"] += amount
-            elif transaction_type == 'Income':
-                total_by_week[week_key]["Income"] += amount
-        
-        return total_by_week
-
-    # OPTIONAL
-    def calculate_monthly_summary(self):
-        total_by_month = dict()
-
-        for entry in self.entries:
-            date = entry[0]
-            date_obj = datetime.strptime(date, "%Y-%m-%d")
-            year = date_obj.year
-            month = date_obj.month
-            month_key = f"{year}-Month {month:02d}"
-
-            if month_key not in total_by_month:
-                total_by_month[month_key] = {
-                    "Income": 0,
-                    "Expense": 0
-                }
-            
-            amount = float(entry[2][1:])
-            transaction_type = entry[3]
-
-            if transaction_type == 'Expense':
-                total_by_month[month_key]["Expense"] += amount
-            elif transaction_type == 'Income':
-                total_by_month[month_key]["Income"] += amount
-
-        return total_by_month
 
 if __name__ == "__main__":
     app = TrackerCSV()
