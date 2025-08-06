@@ -10,7 +10,7 @@ from datetime import datetime
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
-
+ 
 # Global colors
 EXPENSE_COLORS = [
     "#FFB3BA", "#FFD2B3", "#FFF4B3", "#B3E5FF", "#D4B3FF",
@@ -187,66 +187,89 @@ class TrackerCSV(tk.Tk):
         cleaned = []
         for entry in self.entries:
             date_str, cat, amt_str, typ = entry
-
-            # Convert to float
-            amt = float(amt_str.replace("$", "").replace(",", ""))
-
-            # Clean up date info
+            # Convert to float and parse date
             date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+            amt = float(amt_str.replace("$", "").replace(",", ""))
+            # Prefix income labels
+            label = f"Income: {cat}" if typ == "Income" else cat
+            cleaned.append((date_obj, label, amt))
 
-            cleaned.append((date_obj, cat, amt, typ))
-
-        # Determine averaging factor based on filter
         filter_choice = self.filter_option.get()
-        if filter_choice == "Monthly":
-            n = len(Transaction(self.entries).calculate_monthly_summary()) or 1
-        elif filter_choice == "Weekly":
-            n = len(Transaction(self.entries).calculate_weekly_summary()) or 1
+
+        if filter_choice == "None":
+            # Raw total percentages
+            totals = {}
+            for _, label, amt in cleaned:
+                totals[label] = totals.get(label, 0) + amt
+            grand_total = sum(totals.values()) or 1
+            labels = list(totals.keys())
+            sizes = [totals[l] / grand_total * 100 for l in labels]
+            # Title values
+            total_inc = sum(v for k, v in totals.items() if k.startswith("Income: "))
+            total_exp = sum(v for k, v in totals.items() if not k.startswith("Income: "))
         else:
-            n = 1
+            # Define period function
+            if filter_choice == "Monthly":
+                period_fn = lambda d: d.strftime("%Y-%m")
+            else:  # Weekly
+                period_fn = lambda d: f"{d.isocalendar()[0]}-W{d.isocalendar()[1]:02d}"
 
-        # Group data by Type + Category
-        expense_category = {}
-        income_category  = {}
+            period_data = {}
+            for dt, label, amt in cleaned:
+                key = period_fn(dt)
+                period_data.setdefault(key, {})
+                period_data[key][label] = period_data[key].get(label, 0) + amt
 
-        for date_obj, category, amount, typ in cleaned:
-            if typ == "Expense":
-                expense_category[category] = expense_category.get(category, 0) + amount
-            else:
-                income_category[category]  = income_category.get(category, 0)  + amount
+            perc_lists = {}
+            for cats in period_data.values():
+                total = sum(cats.values()) or 1
+                for label, amt in cats.items():
+                    perc = amt / total * 100
+                    perc_lists.setdefault(label, []).append(perc)
 
-        for cat in expense_category:
-            expense_category[cat] /= n
-        for cat in income_category:
-            income_category[cat]  /= n
+            # Average the percentages across periods
+            labels = list(perc_lists.keys())
+            sizes = [sum(perc_lists[l]) / len(perc_lists[l]) for l in labels]
 
-        labels = [f"Income:{cat}" for cat in income_category] \
-               + [cat for cat in expense_category]
-        sizes  = [income_category[cat] for cat in income_category] \
-               + [expense_category[cat] for cat in expense_category]
+            # Compute average income/expense for title
+            n = len(period_data) or 1
+            total_inc = sum(
+                sum(c.get(l, 0) for l in c if l.startswith("Income: "))
+                for c in period_data.values()
+            ) / n
+            total_exp = sum(
+                sum(c.get(l, 0) for l in c if not l.startswith("Income: "))
+                for c in period_data.values()
+            ) / n
 
-        # Use predetermined colors for income and expenses
-        num_inc  = len(income_category)
-        num_exp  = len(expense_category)
-        colors   = INCOME_COLORS[:num_inc] + EXPENSE_COLORS[:num_exp]
+        # Order labels so incomes come first, then expenses
+        income_labels = [l for l in labels if l.startswith("Income: ")]
+        expense_labels = [l for l in labels if not l.startswith("Income: ")]
+        ordered_labels = income_labels + expense_labels
+        ordered_sizes = [sizes[labels.index(l)] for l in ordered_labels]
 
-        total_inc = sum(income_category.values())
-        total_exp = sum(expense_category.values())
+        # Use the global color lists directly for income and expenses
+        colors = INCOME_COLORS[:len(income_labels)] + EXPENSE_COLORS[:len(expense_labels)]
 
+        # Draw the pie chart
         plt.close()
-        plt.pie(sizes, labels=labels, autopct="%1.1f%%", colors=colors)
+        plt.pie(
+            ordered_sizes,
+            labels=ordered_labels,
+            autopct="%1.1f%%",
+            colors=colors
+        )
         plt.axis("equal")
-        plt.title(
-            f"Income: ${total_inc:.2f}\nExpenses: ${total_exp:.2f}",
-            pad=20
-        )   
+        plt.title(f"Income: ${total_inc:.2f}\nExpenses: ${total_exp:.2f}", pad=20)
         plt.show()
         self.chart_open = True
 
+# class Transaction for calculations 
 class Transaction:
     def __init__(self, entries):
         self.entries = entries
 
+    # calculate the weekly average
     def calculate_weekly_summary(self):
         total_by_week = dict()
 
@@ -272,6 +295,7 @@ class Transaction:
         
         return total_by_week
 
+    # calculate the monthly average
     def calculate_monthly_summary(self):
         total_by_month = dict()
 
