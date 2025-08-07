@@ -1,0 +1,13 @@
+Date,Category,Amount,Transaction Type
+2025-01-05,Salary,$1000,Income
+2025-01-06,Rent,$300,Expense
+2025-01-12,Freelance,$200,Income
+2025-01-13,Food,$100,Expense
+2025-02-04,Salary,$500,Income
+2025-02-05,Entertainment,$400,Expense
+2025-02-11,Freelance,$300,Income
+2025-02-12,Food,$100,Expense
+2025-03-03,Salary,$200,Income
+2025-03-04,Rent,$200,Expense
+2025-03-10,Bonus,$100,Income
+2025-03-11,Groceries,$100,Expense
